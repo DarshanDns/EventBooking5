@@ -19,7 +19,7 @@ const cors = require('cors');
 // const client = new OAuth2Client('YOUR_GOOGLE_CLIENT_ID');
 
 const app = express();
-const PORT = process.env.PORT || 443;
+const PORT = process.env.PORT || 3000;
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
