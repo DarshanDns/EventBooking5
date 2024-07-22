@@ -9,7 +9,7 @@ const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const PDFDocument = require('pdfkit');
-const { createCanvas } = require('canvas');
+// const { createCanvas } = require('canvas');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const session = require('express-session');
@@ -568,34 +568,34 @@ app.get('/download-receipt', async (req, res) => {
     doc.pipe(res);
 });
 
-app.get('/download-receipt-jpg', async (req, res) => {
-    const { orderId, paymentId, amount, currency, status, concertName, username, email } = req.query;
+// app.get('/download-receipt-jpg', async (req, res) => {
+//     const { orderId, paymentId, amount, currency, status, concertName, username, email } = req.query;
 
-    const canvas = createCanvas(800, 600);
-    const ctx = canvas.getContext('2d');
+//     const canvas = createCanvas(800, 600);
+//     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+//     ctx.fillStyle = 'white';
+//     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = 'black';
-    ctx.font = 'bold 30px Arial';
-    ctx.fillText('Payment Receipt', canvas.width / 2 - 100, 50);
+//     ctx.fillStyle = 'black';
+//     ctx.font = 'bold 30px Arial';
+//     ctx.fillText('Payment Receipt', canvas.width / 2 - 100, 50);
 
-    ctx.font = '20px Arial';
-    ctx.fillText(`Order ID: ${orderId}`, 50, 100);
-    ctx.fillText(`Payment ID: ${paymentId}`, 50, 150);
-    ctx.fillText(`Amount: ₹${amount}`, 50, 200);
-    ctx.fillText(`Currency: ${currency}`, 50, 250);
-    ctx.fillText(`Status: ${status}`, 50, 300);
-    ctx.fillText(`Concert Name: ${concertName}`, 50, 350);
-    ctx.fillText(`Username: ${username}`, 50, 400);
-    ctx.fillText(`Email: ${email}`, 50, 450);
+//     ctx.font = '20px Arial';
+//     ctx.fillText(`Order ID: ${orderId}`, 50, 100);
+//     ctx.fillText(`Payment ID: ${paymentId}`, 50, 150);
+//     ctx.fillText(`Amount: ₹${amount}`, 50, 200);
+//     ctx.fillText(`Currency: ${currency}`, 50, 250);
+//     ctx.fillText(`Status: ${status}`, 50, 300);
+//     ctx.fillText(`Concert Name: ${concertName}`, 50, 350);
+//     ctx.fillText(`Username: ${username}`, 50, 400);
+//     ctx.fillText(`Email: ${email}`, 50, 450);
 
-    res.setHeader('Content-disposition', 'attachment; filename="receipt.jpg"');
-    res.setHeader('Content-type', 'image/jpeg');
+//     res.setHeader('Content-disposition', 'attachment; filename="receipt.jpg"');
+//     res.setHeader('Content-type', 'image/jpeg');
 
-    canvas.createJPEGStream().pipe(res);
-});
+//     canvas.createJPEGStream().pipe(res);
+// });
 
 
 // Add this to serve bookings.html
