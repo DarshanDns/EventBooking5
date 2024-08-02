@@ -16,7 +16,7 @@ form.addEventListener('submit', async e => {
 
         console.log(formData);
         // Send form data to server using fetch API
-        const response = await fetch('http://13.60.163.151:3000/register', {
+        const response = await fetch('http://localhost:3000/register', {
             method: 'POST',
             body: formData
         });

@@ -76,8 +76,11 @@ const combinedSchema = new mongoose.Schema({
         contentType: String
     },
     googleId: String,
-    tickets: [ticketSchema]
+    tickets: [ticketSchema],
+    isVerified: { type: Boolean, default: false },
+    verificationToken: String,
 });
+
 
 // Define Event Schema
 const eventSchema = new mongoose.Schema({
@@ -272,6 +275,7 @@ app.get("/", (req, res) => {
     res.sendFile(__dirname + "/HTML/index.html");
 });
 
+
 app.post('/register', upload.single('profile-picture'), async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -283,23 +287,66 @@ app.post('/register', upload.single('profile-picture'), async (req, res) => {
             profilePictureContentType = req.file.mimetype;
         }
 
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+
         const newUser = new CombinedModel({
             username,
             email,
             password,
             profilePicture: {
-                data: profilePictureData, 
-                contentType: profilePictureContentType 
-            }
+                data: profilePictureData,
+                contentType: profilePictureContentType
+            },
+            verificationToken,
         });
 
         await newUser.save();
-        res.status(201).send("User registered successfully!");
+
+        const verificationLink = `http://localhost:${PORT}/verify-email?token=${verificationToken}`;
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Verify Your Email',
+            text: `Hello ${username},\n\nPlease verify your email by clicking the link below:\n\n${verificationLink}\n\nBest regards,\nYour Team`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.log('Error sending email:', error);
+                return res.status(500).send("Error sending verification email. Please try again later.");
+            }
+            console.log('Verification email sent:', info.response);
+            res.status(201).send("User registered successfully! Please check your email to verify your account.");
+        });
     } catch (err) {
         console.error("Error registering user:", err);
         res.status(500).send("Error registering user. Please try again later.");
     }
 });
+
+
+app.get('/verify-email', async (req, res) => {
+    try {
+        const { token } = req.query;
+
+        const user = await CombinedModel.findOne({ verificationToken: token });
+        if (!user) {
+            return res.status(400).send("Invalid or expired verification token.");
+        }
+
+        user.isVerified = true;
+        user.verificationToken = undefined; // Remove the token after verification
+        await user.save();
+
+        res.send("Email verified successfully! You can now log in.");
+    } catch (err) {
+        console.error("Error verifying email:", err);
+        res.status(500).send("Error verifying email. Please try again later.");
+    }
+});
+
+
 
 app.get("/login", (req, res) => {
     res.sendFile(__dirname + "/HTML/login.html");
@@ -334,12 +381,53 @@ app.post('/login', async (req, res) => {
             return res.status(400).json({ message: "Invalid email or password." });
         }
 
+        if (!existingUser.isVerified) {
+            return res.status(400).json({ message: "Please verify your email before logging in." });
+        }
+
         res.status(200).json({ userid: existingUser._id, message: "Login successful!" });
     } catch (err) {
         console.error("Error during login:", err);
         res.status(500).json({ message: "Error during login. Please try again later." });
     }
 });
+
+app.post('/resend-verification-email', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await CombinedModel.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: "Email not found." });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ message: "Email is already verified." });
+        }
+
+        const verificationLink = `http://localhost:${PORT}/verify-email?token=${user.verificationToken}`;
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Resend Email Verification',
+            text: `Hello ${user.username},\n\nPlease verify your email by clicking the link below:\n\n${verificationLink}\n\nBest regards,\nYour Team`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.log('Error sending email:', error);
+                return res.status(500).send("Error sending verification email. Please try again later.");
+            }
+            console.log('Verification email sent:', info.response);
+            res.status(200).send("Verification email sent. Please check your email.");
+        });
+    } catch (err) {
+        console.error("Error resending verification email:", err);
+        res.status(500).json({ message: "Error resending verification email. Please try again later." });
+    }
+});
+
 
 
 // app.get('/user/:id', async (req, res) => {
